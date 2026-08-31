@@ -45,6 +45,7 @@ public class FullGCActionSpec extends BaseActionSpec implements DirectlyInjectio
     List<FlagSpec> flagSpecs = new ArrayList<FlagSpec>();
     flagSpecs.add(new FullGCIntervalFlagSpec());
     flagSpecs.add(new FullGCEffectCountFlagSpec());
+    flagSpecs.add(new FullGCTimeoutFlagSpec());
     return flagSpecs;
   }
 
@@ -55,7 +56,8 @@ public class FullGCActionSpec extends BaseActionSpec implements DirectlyInjectio
 
   @Override
   public String getExample() {
-    return "# Specifies full gc\n" + "blade c jvm fgc --effect-count 100 --interval 1000\n\n";
+    return "# Trigger full gc every second and stop after 60 seconds\n"
+        + "blade c jvm full-gc --interval 1000 --timeout 60\n\n";
   }
 
   @Override
