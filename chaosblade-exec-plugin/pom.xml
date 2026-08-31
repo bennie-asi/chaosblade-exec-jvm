@@ -34,6 +34,7 @@
         <module>chaosblade-exec-plugin-postgrelsql</module>
         <module>chaosblade-exec-plugin-servlet</module>
         <module>chaosblade-exec-plugin-druid</module>
+        <module>chaosblade-exec-plugin-datasource</module>
         <module>chaosblade-exec-plugin-http</module>
         <module>chaosblade-exec-plugin-jedis</module>
         <module>chaosblade-exec-plugin-rocketmq</module>

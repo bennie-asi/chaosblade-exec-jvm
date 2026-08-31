@@ -17,8 +17,12 @@
 package com.alibaba.chaosblade.exec.service.handler;
 
 import com.alibaba.chaosblade.exec.common.center.ManagerFactory;
+import com.alibaba.chaosblade.exec.common.center.ModelSpecManager;
 import com.alibaba.chaosblade.exec.common.center.StatusManager;
 import com.alibaba.chaosblade.exec.common.center.StatusMetric;
+import com.alibaba.chaosblade.exec.common.model.InjectionResultProvider;
+import com.alibaba.chaosblade.exec.common.model.Model;
+import com.alibaba.chaosblade.exec.common.model.ModelSpec;
 import com.alibaba.chaosblade.exec.common.transport.Request;
 import com.alibaba.chaosblade.exec.common.transport.Response;
 import com.alibaba.chaosblade.exec.common.transport.Response.Code;
@@ -27,9 +31,11 @@ import com.alibaba.chaosblade.exec.common.util.StringUtil;
 /** @author Changjun Xiao */
 public class StatusHandler implements RequestHandler {
   private StatusManager statusManager;
+  private ModelSpecManager modelSpecManager;
 
   public StatusHandler() {
     this.statusManager = ManagerFactory.getStatusManager();
+    this.modelSpecManager = ManagerFactory.getModelSpecManager();
   }
 
   @Override
@@ -46,6 +52,14 @@ public class StatusHandler implements RequestHandler {
     StatusMetric statusMetric = statusManager.getStatusMetricByUid(suid);
     if (statusMetric == null) {
       return Response.ofFailure(Code.NOT_FOUND, "data not found");
+    }
+    Model model = statusMetric.getModel();
+    ModelSpec modelSpec = modelSpecManager.getModelSpec(model.getTarget());
+    if (modelSpec instanceof InjectionResultProvider) {
+      String injectionResult = ((InjectionResultProvider) modelSpec).getInjectionResult(suid);
+      if (!StringUtil.isBlank(injectionResult)) {
+        return Response.ofSuccess(injectionResult);
+      }
     }
     return Response.ofSuccess(String.valueOf(statusMetric.getCount()));
   }
