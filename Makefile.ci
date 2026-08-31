@@ -4,7 +4,7 @@
 # =============================================================================
 # 配置变量
 # =============================================================================
-BLADE_VERSION ?= 1.8.0
+BLADE_VERSION ?= 1.8.1
 BLADE_SRC_ROOT := $(shell pwd)
 
 # CI/CD环境检测
@@ -146,4 +146,4 @@ build-java:
 	mvn clean package -Dmaven.test.skip=true -U -q
 	cp $(BLADE_SRC_ROOT)/chaosblade-exec-plugin/chaosblade-exec-plugin-*/target/chaosblade-exec-plugin-*.jar $(PLUGINS_PATH)
 	@echo "打包最终产物..."
-	mvn clean assembly:assembly -Dmaven.test.skip=true -U -q 
+	mvn clean assembly:assembly -Dmaven.test.skip=true -U -q

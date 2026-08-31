@@ -32,7 +32,7 @@ This project contains two GitHub Actions workflows for automated building, testi
 ### 2. Release Workflow (`release.yml`)
 
 **Triggers:**
-- Push version tags (format: `v*`, e.g., `v1.8.0`)
+- Push version tags (format: `v*`, e.g., `v1.8.1`)
 
 **Features:**
 - Full product build using Makefile
@@ -79,8 +79,8 @@ This project uses a hybrid approach combining both Makefile and GitHub Actions:
 1. Ensure code is merged to main branch
 2. Create and push version tag:
    ```bash
-   git tag v1.8.0
-   git push origin v1.8.0
+   git tag v1.8.1
+   git push origin v1.8.1
    ```
 3. Release workflow runs automatically and creates GitHub Release
 
@@ -157,4 +157,4 @@ mvn install -Dmaven.test.skip=true
 
 ### Matrix Build
 
-CI workflow uses matrix strategy to test both Java 8 and Java 11 simultaneously, ensuring compatibility. 
+CI workflow uses matrix strategy to test both Java 8 and Java 11 simultaneously, ensuring compatibility.
