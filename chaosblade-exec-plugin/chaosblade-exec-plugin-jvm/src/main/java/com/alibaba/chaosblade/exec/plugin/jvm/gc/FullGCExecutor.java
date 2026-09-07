@@ -59,17 +59,11 @@ public class FullGCExecutor implements StoppableActionExecutor {
   public synchronized void run(EnhancerModel enhancerModel) throws Exception {
     if (started.compareAndSet(false, true)) {
       final int interval =
-          positiveFlag(
-              enhancerModel,
-              JvmConstant.FLAG_FULL_GC_INTERVAL,
-              DEFAULT_INTERVAL_MILLIS);
+          positiveFlag(enhancerModel, JvmConstant.FLAG_FULL_GC_INTERVAL, DEFAULT_INTERVAL_MILLIS);
       final int totalCount =
           ConfigUtil.getActionFlag(enhancerModel, JvmConstant.FLAG_FULL_GC_TOTAL_COUNT, 0);
       final int timeoutSeconds =
-          positiveFlag(
-              enhancerModel,
-              JvmConstant.FLAG_FULL_GC_TIMEOUT,
-              DEFAULT_TIMEOUT_SECONDS);
+          positiveFlag(enhancerModel, JvmConstant.FLAG_FULL_GC_TIMEOUT, DEFAULT_TIMEOUT_SECONDS);
       if (totalCount < 0) {
         started.set(false);
         throw new IllegalArgumentException("effect-count must be greater than or equal to 0");

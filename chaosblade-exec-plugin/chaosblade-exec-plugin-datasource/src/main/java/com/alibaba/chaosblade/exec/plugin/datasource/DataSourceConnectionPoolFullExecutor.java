@@ -32,12 +32,14 @@ public final class DataSourceConnectionPoolFullExecutor {
 
   DataSourceConnectionPoolFullExecutor(SpringContextResolver resolver) {
     this.resolver = resolver;
-    this.registry = new ExperimentRegistry(new ExperimentRegistry.ReleaseObserver() {
-      @Override
-      public void afterRelease(ConnectionHolder holder, String reason) {
-        refreshReleaseMetrics(holder);
-      }
-    });
+    this.registry =
+        new ExperimentRegistry(
+            new ExperimentRegistry.ReleaseObserver() {
+              @Override
+              public void afterRelease(ConnectionHolder holder, String reason) {
+                refreshReleaseMetrics(holder);
+              }
+            });
   }
 
   public void create(String uid, Model model) throws ExperimentException {
@@ -65,14 +67,18 @@ public final class DataSourceConnectionPoolFullExecutor {
     ConnectionHolder holder = null;
     try {
       PoolSnapshot before = adapter.snapshot();
-      ConnectionTarget target = ConnectionTarget.calculate(before.getMaximum(), before.getActive(), request.getTargetPercent());
-      ConnectionPoolResult result = initialResult(uid, request, adapter, before, target, startedAt, expiresAt);
+      ConnectionTarget target =
+          ConnectionTarget.calculate(
+              before.getMaximum(), before.getActive(), request.getTargetPercent());
+      ConnectionPoolResult result =
+          initialResult(uid, request, adapter, before, target, startedAt, expiresAt);
       if (target.getConnectionsToHold() == 0) {
         result.state = "ALREADY_AT_TARGET";
         returnWithoutHolder(uid, result);
         return;
       }
-      holder = registry.register(uid, resolved.identity(adapter.getPoolType()).key(), expiresAt, result);
+      holder =
+          registry.register(uid, resolved.identity(adapter.getPoolType()).key(), expiresAt, result);
       for (int i = 0; i < target.getConnectionsToHold(); i++) {
         if (System.currentTimeMillis() >= expiresAt) {
           throw new IllegalStateException("EXPERIMENT_EXPIRED: hard TTL reached while acquiring");
@@ -125,7 +131,8 @@ public final class DataSourceConnectionPoolFullExecutor {
       throw new ExperimentException("NOT_FOUND: datasource experiment " + uid);
     }
     if ("RELEASE_INCOMPLETE".equals(result.state)) {
-      throw new ExperimentException("RELEASE_INCOMPLETE: some owned connections could not be closed");
+      throw new ExperimentException(
+          "RELEASE_INCOMPLETE: some owned connections could not be closed");
     }
   }
 
@@ -145,7 +152,14 @@ public final class DataSourceConnectionPoolFullExecutor {
     registry.releaseAll("AGENT_UNLOAD");
   }
 
-  private ConnectionPoolResult initialResult(String uid, ConnectionPoolRequest request, PoolAdapter adapter, PoolSnapshot before, ConnectionTarget target, long startedAt, long expiresAt) {
+  private ConnectionPoolResult initialResult(
+      String uid,
+      ConnectionPoolRequest request,
+      PoolAdapter adapter,
+      PoolSnapshot before,
+      ConnectionTarget target,
+      long startedAt,
+      long expiresAt) {
     ConnectionPoolResult result = new ConnectionPoolResult();
     result.uid = uid;
     result.state = "ACQUIRING";

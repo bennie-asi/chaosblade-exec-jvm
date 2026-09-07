@@ -26,13 +26,15 @@ import com.alibaba.chaosblade.exec.common.model.action.DirectlyInjectionAction;
 import java.util.Arrays;
 import java.util.List;
 
-public final class DataSourceConnectionPoolFullActionSpec extends BaseActionSpec implements DirectlyInjectionAction {
+public final class DataSourceConnectionPoolFullActionSpec extends BaseActionSpec
+    implements DirectlyInjectionAction {
   private final DataSourceConnectionPoolFullExecutor executor;
 
   DataSourceConnectionPoolFullActionSpec(DataSourceConnectionPoolFullExecutor executor) {
     super(null);
     this.executor = executor;
-    setExample("blade create datasource connectionpoolfull --data-source-name coreDataSource --target-percent 100 --timeout 60");
+    setExample(
+        "blade create datasource connectionpoolfull --data-source-name coreDataSource --target-percent 100 --timeout 60");
   }
 
   @Override
@@ -58,9 +60,13 @@ public final class DataSourceConnectionPoolFullActionSpec extends BaseActionSpec
   @Override
   public List<FlagSpec> getActionFlags() {
     return Arrays.<FlagSpec>asList(
-        new SimpleFlagSpec(DataSourceConstant.DATA_SOURCE_NAME, "Spring DataSource bean name, default coreDataSource"),
-        new SimpleFlagSpec(DataSourceConstant.TARGET_PERCENT, "Target pool usage percent, default 100"),
-        new SimpleFlagSpec(DataSourceConstant.TIMEOUT, "Non-renewable hard TTL in seconds, default 60"));
+        new SimpleFlagSpec(
+            DataSourceConstant.DATA_SOURCE_NAME,
+            "Spring DataSource bean name, default coreDataSource"),
+        new SimpleFlagSpec(
+            DataSourceConstant.TARGET_PERCENT, "Target pool usage percent, default 100"),
+        new SimpleFlagSpec(
+            DataSourceConstant.TIMEOUT, "Non-renewable hard TTL in seconds, default 60"));
   }
 
   @Override

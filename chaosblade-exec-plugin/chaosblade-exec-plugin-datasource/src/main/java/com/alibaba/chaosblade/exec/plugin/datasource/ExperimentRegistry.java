@@ -29,24 +29,29 @@ final class ExperimentRegistry {
     void afterRelease(ConnectionHolder holder, String reason);
   }
 
-  private final Map<String, ConnectionHolder> holders = new ConcurrentHashMap<String, ConnectionHolder>();
+  private final Map<String, ConnectionHolder> holders =
+      new ConcurrentHashMap<String, ConnectionHolder>();
   private final Map<String, String> identities = new ConcurrentHashMap<String, String>();
-  private final Map<String, ConnectionPoolResult> completed = new ConcurrentHashMap<String, ConnectionPoolResult>();
-  private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
-    @Override
-    public Thread newThread(Runnable runnable) {
-      Thread thread = new Thread(runnable, "chaosblade-datasource-ttl");
-      thread.setDaemon(true);
-      return thread;
-    }
-  });
+  private final Map<String, ConnectionPoolResult> completed =
+      new ConcurrentHashMap<String, ConnectionPoolResult>();
+  private final ScheduledExecutorService scheduler =
+      Executors.newSingleThreadScheduledExecutor(
+          new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable runnable) {
+              Thread thread = new Thread(runnable, "chaosblade-datasource-ttl");
+              thread.setDaemon(true);
+              return thread;
+            }
+          });
   private final ReleaseObserver observer;
 
   ExperimentRegistry(ReleaseObserver observer) {
     this.observer = observer;
   }
 
-  synchronized ConnectionHolder register(String uid, String identityKey, long expiresAt, ConnectionPoolResult result) {
+  synchronized ConnectionHolder register(
+      String uid, String identityKey, long expiresAt, ConnectionPoolResult result) {
     ConnectionHolder existing = holders.get(uid);
     if (existing != null) {
       return existing;
@@ -59,12 +64,15 @@ final class ExperimentRegistry {
     holders.put(uid, holder);
     identities.put(identityKey, uid);
     long delay = Math.max(1L, expiresAt - System.currentTimeMillis());
-    scheduler.schedule(new Runnable() {
-      @Override
-      public void run() {
-        release(uid, "TTL");
-      }
-    }, delay, TimeUnit.MILLISECONDS);
+    scheduler.schedule(
+        new Runnable() {
+          @Override
+          public void run() {
+            release(uid, "TTL");
+          }
+        },
+        delay,
+        TimeUnit.MILLISECONDS);
     return holder;
   }
 
@@ -83,12 +91,15 @@ final class ExperimentRegistry {
       holders.remove(uid);
       identities.remove(holder.identityKey, uid);
       completed.put(uid, holder.result);
-      scheduler.schedule(new Runnable() {
-        @Override
-        public void run() {
-          completed.remove(uid);
-        }
-      }, 120, TimeUnit.SECONDS);
+      scheduler.schedule(
+          new Runnable() {
+            @Override
+            public void run() {
+              completed.remove(uid);
+            }
+          },
+          120,
+          TimeUnit.SECONDS);
     } else {
       holder.result.state = "RELEASE_INCOMPLETE";
     }
