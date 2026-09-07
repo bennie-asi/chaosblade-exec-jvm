@@ -15,22 +15,6 @@ You can view the help using the following command in the project root directory
 make help
 ```
 
-## Branches, CI and releases (bennie-asi fork)
-
-`master` is the integration branch. Open pull requests against `master`; PR checks
-validate Java 8 and Java 11 compilation, tests, formatting and license headers.
-Branch pushes and version tags do not start independent JVM packaging or releases.
-
-Create version tags such as `v1.8.1` from the approved `master` commit. The
-[ChaosBlade release workflow](https://github.com/bennie-asi/chaosblade/actions/workflows/release.yml)
-checks out the selected JVM tag through `BLADE_EXEC_JVM_BRANCH`, builds this
-component from source and publishes the complete distribution. A JVM tag alone
-does not publish a new ChaosBlade version; update the selected component tag in
-the main repository and release from there.
-
-Historical JVM Releases and Actions artifacts are retained as records. The main
-repository does not consume those archives.
-
 ## Contributing
 We welcome every contribution, even if it is just a punctuation. See details of [CONTRIBUTING](CONTRIBUTING.md)
 

@@ -1,0 +1,86 @@
+# Copyright 2025 The ChaosBlade Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java environment
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+          cache: 'maven'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl unzip
+
+      - name: Set version from tag
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          # Remove 'v' prefix if present
+          VERSION=${VERSION#v}
+          echo "BLADE_VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Building version: $VERSION"
+
+      - name: Build full product with Makefile
+        run: |
+          make clean
+          make build
+
+      - name: Create release packages
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          mkdir -p release
+          
+          # Copy Makefile build artifacts
+          if [ -d "build-target" ]; then
+            cp -r build-target/* release/
+          fi
+          
+          # Copy Maven build artifacts as backup
+          if [ -d "target" ]; then
+            cp target/*.jar release/ 2>/dev/null || true
+          fi
+          
+          # Create compressed packages
+          cd release
+          if [ "$(ls -A)" ]; then
+            tar -czf chaosblade-jvm-${VERSION}.tar.gz *
+          else
+            echo "Warning: No build artifacts found"
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
