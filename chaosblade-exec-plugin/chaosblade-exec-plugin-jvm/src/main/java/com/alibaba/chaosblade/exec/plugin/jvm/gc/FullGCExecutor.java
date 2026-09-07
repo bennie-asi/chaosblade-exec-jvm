@@ -20,6 +20,7 @@ import com.alibaba.chaosblade.exec.common.aop.EnhancerModel;
 import com.alibaba.chaosblade.exec.common.util.ConfigUtil;
 import com.alibaba.chaosblade.exec.plugin.jvm.JvmConstant;
 import com.alibaba.chaosblade.exec.plugin.jvm.StoppableActionExecutor;
+import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -36,26 +37,53 @@ import org.slf4j.LoggerFactory;
 public class FullGCExecutor implements StoppableActionExecutor {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(FullGCExecutor.class);
+  private static final int DEFAULT_INTERVAL_MILLIS = 1000;
+  private static final int DEFAULT_TIMEOUT_SECONDS = 60;
 
   private volatile ScheduledExecutorService scheduledExecutorService;
-  private AtomicInteger fullGCCounter = new AtomicInteger();
+  private final AtomicInteger fullGCCounter = new AtomicInteger();
   private final AtomicBoolean started = new AtomicBoolean(false);
+  private final FullGCInvoker fullGCInvoker;
 
   private final MBeanServer mbeanServer = ManagementFactory.getPlatformMBeanServer();
+
+  public FullGCExecutor() {
+    this(null);
+  }
+
+  FullGCExecutor(FullGCInvoker fullGCInvoker) {
+    this.fullGCInvoker = fullGCInvoker;
+  }
 
   @Override
   public synchronized void run(EnhancerModel enhancerModel) throws Exception {
     if (started.compareAndSet(false, true)) {
       final int interval =
-          ConfigUtil.getActionFlag(enhancerModel, JvmConstant.FLAG_FULL_GC_INTERVAL, 1);
+          positiveFlag(
+              enhancerModel,
+              JvmConstant.FLAG_FULL_GC_INTERVAL,
+              DEFAULT_INTERVAL_MILLIS);
       final int totalCount =
           ConfigUtil.getActionFlag(enhancerModel, JvmConstant.FLAG_FULL_GC_TOTAL_COUNT, 0);
+      final int timeoutSeconds =
+          positiveFlag(
+              enhancerModel,
+              JvmConstant.FLAG_FULL_GC_TIMEOUT,
+              DEFAULT_TIMEOUT_SECONDS);
+      if (totalCount < 0) {
+        started.set(false);
+        throw new IllegalArgumentException("effect-count must be greater than or equal to 0");
+      }
+      final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(timeoutSeconds);
+      fullGCCounter.set(0);
       scheduledExecutorService =
           Executors.newSingleThreadScheduledExecutor(
               new ThreadFactory() {
                 @Override
                 public Thread newThread(Runnable r) {
-                  return new Thread(r, "chaosblade-fgc-thread");
+                  Thread thread = new Thread(r, "chaosblade-fgc-thread");
+                  thread.setDaemon(true);
+                  return thread;
                 }
               });
       scheduledExecutorService.scheduleAtFixedRate(
@@ -63,18 +91,26 @@ public class FullGCExecutor implements StoppableActionExecutor {
             @Override
             public void run() {
               try {
-                if (totalCount > 0 && fullGCCounter.get() >= totalCount) {
+                if (System.nanoTime() >= deadline
+                    || (totalCount > 0 && fullGCCounter.get() >= totalCount)) {
                   doStop();
                   return;
                 }
-                doGc();
+                boolean triggered = fullGCInvoker == null ? doGc() : fullGCInvoker.invoke();
+                if (triggered) {
+                  int count = fullGCCounter.incrementAndGet();
+                  LOGGER.debug("jvm full gc triggered, count:{}", count);
+                  if (totalCount > 0 && count >= totalCount) {
+                    doStop();
+                  }
+                }
               } catch (Exception e) {
-                LOGGER.error("do gcClassHistogram error", e);
+                LOGGER.error("trigger full gc error", e);
               }
             }
           },
           0,
-          interval <= 0 ? 1 : interval,
+          interval,
           TimeUnit.MILLISECONDS);
     } else {
       LOGGER.warn("another executor is running now");
@@ -95,30 +131,45 @@ public class FullGCExecutor implements StoppableActionExecutor {
           LOGGER.error("shutdown executor error", e);
         }
         scheduledExecutorService = null;
-        fullGCCounter = new AtomicInteger();
         LOGGER.info("jvm full gc stopped");
       }
     }
   }
 
-  private void doGc()
+  private int positiveFlag(EnhancerModel enhancerModel, String name, int defaultValue) {
+    int value = ConfigUtil.getActionFlag(enhancerModel, name, defaultValue);
+    if (value <= 0) {
+      started.set(false);
+      throw new IllegalArgumentException(name + " must be greater than 0");
+    }
+    return value;
+  }
+
+  boolean isRunning() {
+    return started.get();
+  }
+
+  int getFullGCCount() {
+    return fullGCCounter.get();
+  }
+
+  private boolean doGc()
       throws MalformedObjectNameException, IntrospectionException, ReflectionException,
           InstanceNotFoundException, MBeanException {
     if (jvmBefore8()) {
-      doGCHistogramInSeparateProcess();
-    } else {
-      doGcHistogramInMbean();
+      return doGCHistogramInSeparateProcess();
     }
+    return doGcHistogramInMbean();
   }
 
-  private void doGcHistogramInMbean()
+  private boolean doGcHistogramInMbean()
       throws MalformedObjectNameException, IntrospectionException, InstanceNotFoundException,
           ReflectionException, MBeanException {
     Set<ObjectName> objectNames =
         mbeanServer.queryNames(new ObjectName("com.sun.management:type=DiagnosticCommand"), null);
     if (objectNames == null || objectNames.isEmpty()) {
       LOGGER.warn("no mBean found, exit");
-      return;
+      return false;
     }
     for (ObjectName name : objectNames) {
       MBeanInfo mBeanInfo = mbeanServer.getMBeanInfo(name);
@@ -129,34 +180,42 @@ public class FullGCExecutor implements StoppableActionExecutor {
           Object[] dcmdArgs = {emptyStringArgs};
           String[] signature = {String[].class.getName()};
           Object invoke = mbeanServer.invoke(name, op.getName(), dcmdArgs, signature);
-          int count = fullGCCounter.getAndIncrement();
-          LOGGER.debug("do gc class histogram count:{} \n, {}", count, invoke);
+          LOGGER.debug("gc class histogram result: {}", invoke);
+          return true;
         }
       }
     }
+    LOGGER.warn("gcClassHistogram operation was not found");
+    return false;
   }
 
-  private void doGCHistogramInSeparateProcess() {
+  private boolean doGCHistogramInSeparateProcess() {
     int pid = getPid();
     String cmd = null;
     try {
       String javaHome = System.getenv("JAVA_HOME");
+      if (javaHome == null || javaHome.trim().isEmpty()) {
+        javaHome = System.getProperty("java.home");
+      }
       if (javaHome.endsWith("/")) {
         javaHome = javaHome.substring(0, javaHome.length() - 1);
       }
       cmd = javaHome + "/bin/jmap";
       ProcessBuilder pb = new ProcessBuilder(cmd, "-histo:live", String.valueOf(pid));
+      pb.redirectErrorStream(true);
+      pb.redirectOutput(new File("/dev/null"));
       Process start = pb.start();
-      int count = fullGCCounter.getAndIncrement();
-      start.waitFor();
-      LOGGER.debug("do gc class histogram in separate process count:{} cmd:{}", count, cmd);
+      int exitCode = start.waitFor();
+      LOGGER.debug("gc class histogram process exited with {}, cmd:{}", exitCode, cmd);
+      return exitCode == 0;
     } catch (Exception e) {
       LOGGER.error("exec jmap error, cmd:{}", cmd, e);
+      return false;
     }
   }
 
   private static int getPid() {
-    byte pid = 0;
+    int pid = 0;
     try {
       String name = ManagementFactory.getRuntimeMXBean().getName();
       return Integer.parseInt(name.substring(0, name.indexOf('@')));
@@ -172,5 +231,9 @@ public class FullGCExecutor implements StoppableActionExecutor {
       return true;
     }
     return false;
+  }
+
+  interface FullGCInvoker {
+    boolean invoke() throws Exception;
   }
 }

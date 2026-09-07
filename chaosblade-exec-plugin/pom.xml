@@ -23,7 +23,7 @@
     <parent>
         <artifactId>chaosblade-exec-jvm</artifactId>
         <groupId>com.alibaba.chaosblade</groupId>
-        <version>1.8.0</version>
+        <version>1.8.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -36,6 +36,7 @@
         <module>chaosblade-exec-plugin-postgrelsql</module>
         <module>chaosblade-exec-plugin-servlet</module>
         <module>chaosblade-exec-plugin-druid</module>
+        <module>chaosblade-exec-plugin-datasource</module>
         <module>chaosblade-exec-plugin-http</module>
         <module>chaosblade-exec-plugin-jedis</module>
         <module>chaosblade-exec-plugin-rocketmq</module>

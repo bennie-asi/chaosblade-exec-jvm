@@ -85,6 +85,7 @@ public interface JvmConstant {
 
   String FLAG_FULL_GC_INTERVAL = "interval";
   String FLAG_FULL_GC_TOTAL_COUNT = "effect-count";
+  String FLAG_FULL_GC_TIMEOUT = "timeout";
   String ACTION_FULL_GC_NAME = "full-gc";
   String ACTION_FULL_GC_ALIAS = "fgc";
 }

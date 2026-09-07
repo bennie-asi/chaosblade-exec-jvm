@@ -22,6 +22,7 @@ import com.alibaba.chaosblade.exec.common.center.StatusManager;
 import com.alibaba.chaosblade.exec.common.exception.ExperimentException;
 import com.alibaba.chaosblade.exec.common.model.Model;
 import com.alibaba.chaosblade.exec.common.model.ModelSpec;
+import com.alibaba.chaosblade.exec.common.model.InjectionResultProvider;
 import com.alibaba.chaosblade.exec.common.model.handler.PreDestroyInjectionModelHandler;
 import com.alibaba.chaosblade.exec.common.transport.Request;
 import com.alibaba.chaosblade.exec.common.transport.Response;
@@ -116,6 +117,12 @@ public class DestroyHandler implements RequestHandler {
       applyPreDestroyInjectionModelHandler(uid, modelSpec, model);
     } catch (ExperimentException ex) {
       return Response.ofFailure(Code.SERVER_ERROR, ex.getMessage());
+    }
+    if (modelSpec instanceof InjectionResultProvider) {
+      String injectionResult = ((InjectionResultProvider) modelSpec).getInjectionResult(uid);
+      if (!StringUtil.isBlank(injectionResult)) {
+        return Response.ofSuccess(injectionResult);
+      }
     }
     return Response.ofSuccess("success");
   }

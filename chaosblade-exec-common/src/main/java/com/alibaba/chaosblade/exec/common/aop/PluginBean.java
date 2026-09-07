@@ -31,7 +31,8 @@ public class PluginBean implements Plugin {
   public PluginBean(Plugin plugin) {
     this.name = plugin.getName();
     this.modelSpec = plugin.getModelSpec();
-    this.pointCut = new PointCutBean(plugin.getPointCut());
+    PointCut pluginPointCut = plugin.getPointCut();
+    this.pointCut = pluginPointCut == null ? null : new PointCutBean(pluginPointCut);
     this.enhancer = plugin.getEnhancer();
     if (plugin instanceof MethodPlugin) {
       this.isAfterEvent = ((MethodPlugin) plugin).isAfterEvent();

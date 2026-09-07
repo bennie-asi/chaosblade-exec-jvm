@@ -27,6 +27,7 @@ import com.alibaba.chaosblade.exec.common.center.StatusManager;
 import com.alibaba.chaosblade.exec.common.exception.ExperimentException;
 import com.alibaba.chaosblade.exec.common.model.Model;
 import com.alibaba.chaosblade.exec.common.model.ModelSpec;
+import com.alibaba.chaosblade.exec.common.model.InjectionResultProvider;
 import com.alibaba.chaosblade.exec.common.model.action.ActionSpec;
 import com.alibaba.chaosblade.exec.common.model.handler.PreCreateInjectionModelHandler;
 import com.alibaba.chaosblade.exec.common.transport.Request;
@@ -149,6 +150,12 @@ public class CreateHandler implements RequestHandler {
         return Response.ofFailure(Response.Code.SERVER_ERROR, ex.getMessage());
       }
 
+      if (modelSpec instanceof InjectionResultProvider) {
+        String injectionResult = ((InjectionResultProvider) modelSpec).getInjectionResult(suid);
+        if (!StringUtil.isBlank(injectionResult)) {
+          return Response.ofSuccess(injectionResult);
+        }
+      }
       return Response.ofSuccess(model.toString());
     }
     return Response.ofFailure(Response.Code.DUPLICATE_INJECTION, "the experiment exists");
