@@ -31,7 +31,9 @@ public final class PoolAdapterFactory {
     if (hasMethod(type, "getHikariPoolMXBean") && hasMethod(type, "getMaximumPoolSize")) {
       return new HikariAdapter((DataSource) candidate);
     }
-    if (hasMethod(type, "getMaxActive") && hasMethod(type, "getActiveCount") && hasMethod(type, "getPoolingCount")) {
+    if (hasMethod(type, "getMaxActive")
+        && hasMethod(type, "getActiveCount")
+        && hasMethod(type, "getPoolingCount")) {
       return new DruidAdapter((DataSource) candidate);
     }
     throw new IllegalArgumentException("UNSUPPORTED_POOL: " + type.getName());
@@ -92,7 +94,8 @@ public final class PoolAdapterFactory {
       if (mxBean == null) {
         throw new IllegalStateException("METRICS_UNAVAILABLE: Hikari pool is not started");
       }
-      return new PoolSnapshot(maximum, integer(mxBean, "getActiveConnections"), integer(mxBean, "getIdleConnections"));
+      return new PoolSnapshot(
+          maximum, integer(mxBean, "getActiveConnections"), integer(mxBean, "getIdleConnections"));
     }
   }
 
@@ -108,7 +111,10 @@ public final class PoolAdapterFactory {
 
     @Override
     public PoolSnapshot snapshot() throws Exception {
-      return new PoolSnapshot(integer(dataSource, "getMaxActive"), integer(dataSource, "getActiveCount"), integer(dataSource, "getPoolingCount"));
+      return new PoolSnapshot(
+          integer(dataSource, "getMaxActive"),
+          integer(dataSource, "getActiveCount"),
+          integer(dataSource, "getPoolingCount"));
     }
   }
 }

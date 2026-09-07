@@ -30,13 +30,16 @@ public final class ConnectionPoolRequest {
   }
 
   public static ConnectionPoolRequest from(Model model) {
-    String name = valueOrDefault(model, DataSourceConstant.DATA_SOURCE_NAME, "coreDataSource").trim();
+    String name =
+        valueOrDefault(model, DataSourceConstant.DATA_SOURCE_NAME, "coreDataSource").trim();
     if (name.length() == 0) {
-      throw new IllegalArgumentException("INVALID_DATASOURCE_NAME: data-source-name must not be empty");
+      throw new IllegalArgumentException(
+          "INVALID_DATASOURCE_NAME: data-source-name must not be empty");
     }
     int percent = parseInt(model, DataSourceConstant.TARGET_PERCENT, 100);
     if (percent < 1 || percent > 100) {
-      throw new IllegalArgumentException("INVALID_TARGET_PERCENT: target-percent must be between 1 and 100");
+      throw new IllegalArgumentException(
+          "INVALID_TARGET_PERCENT: target-percent must be between 1 and 100");
     }
     long timeout = parseLong(model, DataSourceConstant.TIMEOUT, 60L);
     if (timeout <= 0) {
@@ -58,7 +61,8 @@ public final class ConnectionPoolRequest {
     try {
       return Integer.parseInt(value.trim());
     } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("INVALID_" + key.toUpperCase().replace('-', '_') + ": must be an integer");
+      throw new IllegalArgumentException(
+          "INVALID_" + key.toUpperCase().replace('-', '_') + ": must be an integer");
     }
   }
 

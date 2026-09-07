@@ -90,7 +90,8 @@ public class FullGCExecutorTest {
     model.getAction().addFlag("interval", interval);
     model.getAction().addFlag("effect-count", count);
     model.getAction().addFlag("timeout", timeout);
-    EnhancerModel enhancerModel = new EnhancerModel(getClass().getClassLoader(), model.getMatcher());
+    EnhancerModel enhancerModel =
+        new EnhancerModel(getClass().getClassLoader(), model.getMatcher());
     enhancerModel.merge(model);
     return enhancerModel;
   }

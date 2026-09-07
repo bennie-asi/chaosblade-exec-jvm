@@ -42,7 +42,8 @@ public final class SpringContextResolver {
           if (!booleanMethod(context, "containsBean", beanName)) {
             continue;
           }
-          Object bean = method(context.getClass(), "getBean", String.class).invoke(context, beanName);
+          Object bean =
+              method(context.getClass(), "getBean", String.class).invoke(context, beanName);
           if (bean instanceof javax.sql.DataSource) {
             matches.add(new ResolvedDataSource(bean, loader, context, beanName));
           }
@@ -55,10 +56,12 @@ public final class SpringContextResolver {
       return matches.get(0);
     }
     if (matches.size() > 1) {
-      throw new IllegalStateException("DATASOURCE_AMBIGUOUS: multiple active contexts contain bean " + beanName);
+      throw new IllegalStateException(
+          "DATASOURCE_AMBIGUOUS: multiple active contexts contain bean " + beanName);
     }
     String suffix = lastFailure == null ? "" : ": " + lastFailure.getClass().getSimpleName();
-    throw new IllegalStateException("DATASOURCE_CONTEXT_UNAVAILABLE: no unique active bean " + beanName + suffix);
+    throw new IllegalStateException(
+        "DATASOURCE_CONTEXT_UNAVAILABLE: no unique active bean " + beanName + suffix);
   }
 
   private Set<ClassLoader> candidateClassLoaders() {
@@ -73,7 +76,8 @@ public final class SpringContextResolver {
   }
 
   private Collection<?> contexts(ClassLoader loader) throws Exception {
-    Class<?> springApplication = Class.forName("org.springframework.boot.SpringApplication", false, loader);
+    Class<?> springApplication =
+        Class.forName("org.springframework.boot.SpringApplication", false, loader);
     Field hookField = field(springApplication, "shutdownHook");
     Object hook = hookField.get(null);
     Field contextsField = findContextsField(hook.getClass());
@@ -124,7 +128,8 @@ public final class SpringContextResolver {
     throw new NoSuchFieldException(type.getName() + "." + name);
   }
 
-  private static Method method(Class<?> type, String name, Class<?>... parameterTypes) throws Exception {
+  private static Method method(Class<?> type, String name, Class<?>... parameterTypes)
+      throws Exception {
     Method method = type.getMethod(name, parameterTypes);
     method.setAccessible(true);
     return method;

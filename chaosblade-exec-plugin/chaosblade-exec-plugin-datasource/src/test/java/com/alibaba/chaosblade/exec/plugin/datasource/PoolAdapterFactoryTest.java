@@ -35,17 +35,48 @@ public class PoolAdapterFactoryTest {
   }
 
   public static final class FakeDruidDataSource implements DataSource {
-    public int getMaxActive() { return 4; }
-    public int getActiveCount() { return 1; }
-    public int getPoolingCount() { return 3; }
-    public Connection getConnection() { return null; }
-    public Connection getConnection(String username, String password) { return null; }
-    public PrintWriter getLogWriter() { return null; }
+    public int getMaxActive() {
+      return 4;
+    }
+
+    public int getActiveCount() {
+      return 1;
+    }
+
+    public int getPoolingCount() {
+      return 3;
+    }
+
+    public Connection getConnection() {
+      return null;
+    }
+
+    public Connection getConnection(String username, String password) {
+      return null;
+    }
+
+    public PrintWriter getLogWriter() {
+      return null;
+    }
+
     public void setLogWriter(PrintWriter out) {}
+
     public void setLoginTimeout(int seconds) {}
-    public int getLoginTimeout() { return 0; }
-    public Logger getParentLogger() throws SQLFeatureNotSupportedException { return Logger.getGlobal(); }
-    public <T> T unwrap(Class<T> iface) throws SQLException { throw new SQLException(); }
-    public boolean isWrapperFor(Class<?> iface) { return false; }
+
+    public int getLoginTimeout() {
+      return 0;
+    }
+
+    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+      return Logger.getGlobal();
+    }
+
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+      throw new SQLException();
+    }
+
+    public boolean isWrapperFor(Class<?> iface) {
+      return false;
+    }
   }
 }

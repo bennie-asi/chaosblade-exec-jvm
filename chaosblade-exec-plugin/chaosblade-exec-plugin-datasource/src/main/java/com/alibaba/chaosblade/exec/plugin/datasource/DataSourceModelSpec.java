@@ -24,9 +24,14 @@ import com.alibaba.chaosblade.exec.common.model.Model;
 import com.alibaba.chaosblade.exec.common.model.handler.PreCreateInjectionModelHandler;
 import com.alibaba.chaosblade.exec.common.model.handler.PreDestroyInjectionModelHandler;
 
-public final class DataSourceModelSpec extends BaseModelSpec implements PreCreateInjectionModelHandler, PreDestroyInjectionModelHandler, InjectionResultProvider {
-  private final DataSourceConnectionPoolFullExecutor executor = new DataSourceConnectionPoolFullExecutor();
-  private final DataSourceConnectionPoolFullActionSpec action = new DataSourceConnectionPoolFullActionSpec(executor);
+public final class DataSourceModelSpec extends BaseModelSpec
+    implements PreCreateInjectionModelHandler,
+        PreDestroyInjectionModelHandler,
+        InjectionResultProvider {
+  private final DataSourceConnectionPoolFullExecutor executor =
+      new DataSourceConnectionPoolFullExecutor();
+  private final DataSourceConnectionPoolFullActionSpec action =
+      new DataSourceConnectionPoolFullActionSpec(executor);
 
   public DataSourceModelSpec() {
     addActionSpec(action);

@@ -25,7 +25,8 @@ import org.junit.Test;
 public class ConnectionPoolRequestTest {
   @Test
   public void shouldApplyDefaults() {
-    ConnectionPoolRequest request = ConnectionPoolRequest.from(new Model("datasource", "connectionpoolfull"));
+    ConnectionPoolRequest request =
+        ConnectionPoolRequest.from(new Model("datasource", "connectionpoolfull"));
     assertEquals("coreDataSource", request.getDataSourceName());
     assertEquals(100, request.getTargetPercent());
     assertEquals(60L, request.getTimeoutSeconds());
